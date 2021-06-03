@@ -44,7 +44,7 @@ Mwol (Mqtt wake on lan), 是在原版【wakeonlan】的基础上，增加【MQTT
 ```
 {
 	"header": {
-		"action": "arpList"
+		"action": "response_arp"
 	},
 	"payload": {
 		"deviceId": "testmwolid",
@@ -86,7 +86,7 @@ Mwol (Mqtt wake on lan), 是在原版【wakeonlan】的基础上，增加【MQTT
 ```
 {
 	"header": {
-		"action": "wol"
+		"action": "response_wol"
 	},
 	"payload": {
 		"mac": "00:03:7f:11:23:1f",

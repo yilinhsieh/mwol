@@ -232,7 +232,7 @@ void json_arp_list(char **msg)
 	
 	cJSON_AddItemToObject(root, "header", dir1=cJSON_CreateObject());
 
-	cJSON_AddStringToObject(dir1, "action", "arp");
+	cJSON_AddStringToObject(dir1, "action", "response_arp");
 
 	cJSON_AddItemToObject(root, "payload", dir2=cJSON_CreateObject());
 	cJSON_AddStringToObject(dir2, "deviceId", board_config->gw_id);
@@ -291,7 +291,7 @@ void json_arp_list(char **msg)
 /*
 {
 	"header": {
-		"action": "wol"
+		"action": "response_wol"
 	},
 	"payload": {
 		"mac": "00:03:7f:11:23:1f",
@@ -308,7 +308,7 @@ void json_wol_response(char **msg, char *mac)
 	cJSON *root = cJSON_CreateObject();
 	cJSON_AddItemToObject(root, "header", dir1=cJSON_CreateObject());
 
-	cJSON_AddStringToObject(dir1, "action", "wol");
+	cJSON_AddStringToObject(dir1, "action", "response_wol");
 
 	cJSON_AddItemToObject(root, "payload", dir2=cJSON_CreateObject());
 	cJSON_AddStringToObject(dir2, "mac", mac);
