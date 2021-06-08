@@ -211,6 +211,7 @@ void json_arp_list(char **msg)
 {
 	FILE *fp;
 	unsigned int arp_flags;
+	unsigned int hw_type;
 	char buffer[256], arp_mac[32], arp_if[32];
 	char hostName[64] = {0};
 	int ret = -1;
@@ -244,17 +245,18 @@ void json_arp_list(char **msg)
 	cJSON_AddItemToArray(dataArry, dir3);
 	
 	fp = fopen("/proc/net/arp", "r");
+	
 	if (fp) {
 		// skip first line
 		fgets(buffer, sizeof(buffer), fp);
-		
 		while (fgets(buffer, sizeof(buffer), fp)) {
+			//MSG_DEBUG("arp: %s ", buffer);
 			arp_flags = 0;
-			if (sscanf(buffer, "%s %*s 0x%x %31s %*s %31s", s_addr1, &arp_flags, arp_mac, arp_if) == 4) {
-				if((arp_flags & 0x02)&&(strcmp(arp_if, IFNAME_BR) == 0) && (strcmp(arp_mac, "00:00:00:00:00:00"))){
-					//printf("s_addr1:%s,arp_mac:%s\n",s_addr1,arp_mac);
+			if (sscanf(buffer, "%s 0x%x 0x%x %s ", s_addr1, &hw_type, &arp_flags, arp_mac) ) {
+				if((arp_flags & 0x02) && (strcmp(arp_mac, "00:00:00:00:00:00"))){
+					//printf("s_addr1:%s, arp_mac:%s\n",s_addr1,arp_mac);
 					//printf("arp_flags:0x%02x\n",arp_flags);
-					//printf("arp_if:%s\n",arp_if);
+					
 					dir3=cJSON_CreateObject();
 					memset(hostName, 0, sizeof(hostName));
 					ret = get_name_info(s_addr1, hostName);
