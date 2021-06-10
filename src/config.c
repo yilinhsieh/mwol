@@ -114,6 +114,18 @@ static int parse_wol_configuration(const char * conf_file) {
 		MSG_DEBUG("WARNING: Data type for id seems wrong, use default id [%s]\n", mqtt_server->id);
 	}
 
+
+	val = cJSON_GetObjectItem(root_val, "wol_ifname"); /* fetch value (if possible) */
+	if (val != NULL) {
+		if(mqtt_server->id != NULL){
+			free(mqtt_server->id);
+		}
+		mqtt_server->id = safe_strdup(val->valuestring);
+		MSG_DEBUG("id:[%s]\n", mqtt_server->id);
+	} else {
+		MSG_DEBUG("WARNING: Data type for id seems wrong, use default id [%s]\n", mqtt_server->id);
+	}
+
 	if(mqtt_server->ssl == true){
 	    val = cJSON_GetObjectItem(root_val, "cafile"); /* fetch value (if possible) */
 	    if (val != NULL) {
@@ -196,13 +208,26 @@ config_get(void)
     return &CONFIG;
 }
 
-void config_init(void)
+int config_init(void)
 {
 	char ap_mac[24]={0};
-
+	
 	memset(ap_mac, 0 , sizeof(ap_mac));
-	get_eth_mac("eth0", ap_mac);
-
+	
+	if(!CONFIG.ifname)  //not assigned in command line
+	{
+		CONFIG.ifname =  get_default_ifname(); 
+		if(!CONFIG.ifname)
+		{
+			MSG_DEBUG("Can't get default ifname, assigned %s\n", DEFAULT_IFNAME);
+			CONFIG.ifname = safe_strdup(DEFAULT_IFNAME);
+		}
+	}
+		
+	if(get_eth_mac(CONFIG.ifname, ap_mac) < 0 )
+	{
+		return -1;
+	}
 	CONFIG.configfile = safe_strdup(DEFAULT_CONFIGFILE);
 	CONFIG.gw_id =  safe_strdup(ap_mac);
 	CONFIG.presetmac	= safe_strdup(DEFAULT_PRESET_MAC);
@@ -219,6 +244,6 @@ void config_init(void)
 	mqtt_server->id	= safe_strdup(ap_mac);
 
 	CONFIG.mqtt_server	= mqtt_server;
-
+	return 0;
 }
 

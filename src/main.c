@@ -27,9 +27,10 @@ int main(int argc, char *argv[])
 {
     s_config *config = NULL;
 
-	config_init();
-
 	parse_commandline(argc, argv);
+
+	if(config_init() < 0)
+		return -1;
 
 	config = config_get();
 	if(config != NULL){

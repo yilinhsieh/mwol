@@ -26,26 +26,27 @@
 #define DEFAULT_MQTT_PORT       1883
 #define DEFAULT_ENCRYPTION      false
 #define DEFAULT_SSL      		false
-#define DEFAULT_MQTT_USERNAME       "mleaf"
-#define DEFAULT_MQTT_PASSWORD       "www.mleaf.org"
-#define DEFAULT_PRESET_MAC       "00:0c:29:eb:5f:12"	
-#define	DEFAULT_CA_FILE		"/usr/share/etherwake/ca.crt"
-#define	DEFAULT_CRT_FILE	"/usr/share/etherwake/client.crt"
-#define	DEFAULT_KEY_FILE	"/usr/share/etherwake/client.key"
+#define DEFAULT_IFNAME          "eth0"
+#define DEFAULT_MQTT_USERNAME       "wol"
+#define DEFAULT_MQTT_PASSWORD       "wolpass"
+#define DEFAULT_PRESET_MAC       "01:02:03:04:05:06"	
+#define	DEFAULT_CA_FILE		"/usr/share/mwol/ssl/ca.crt"
+#define	DEFAULT_CRT_FILE	"/usr/share/mwol/ssl/client.crt"
+#define	DEFAULT_KEY_FILE	"/usr/share/mwol/ssl/client.key"
 			
-#define DEFAULT_CONFIGFILE  "/tmp/wol_conf.json"
+#define DEFAULT_CONFIGFILE  "/etc/mwol.json"
 
 /*
 {
-	"hostname": "www.mleaf.org",
-	"port": 1883,
-	"ssl": false,
-	"cafile": "/usr/share/etherwake/ca.crt",
-	"crtfile": "/usr/share/etherwake/client.crt",
-	"keyfile": "/usr/share/etherwake/client.key",
-	"encryption": true,
-	"username": "mleaf",
-	"password": "www.mleaf.org"
+        "ssl": true,
+        "port": 8884,
+        "keyfile": "/usr/share/mwol/ssl/client.key",
+        "encryption": true,
+        "id": "18:31:bf:52:1a:a5",
+        "cafile": "/usr/share/mwol/ssl/mosquitto.org.crt",
+        "crtfile": "/usr/share/mwol/ssl/client.crt",
+        "hostname": "test.mosquitto.org",
+        "wol_ifname": "eno1"
 }
 */
 typedef struct _mqtt_server_t {
@@ -66,11 +67,12 @@ typedef struct{
 	char *configfile;
 	char *gw_id;
 	char *presetmac;
+	char *ifname;
 	t_mqtt_server	*mqtt_server;
 }s_config;
 
 extern int config_read_from_json(char *cfg_path);
-extern void config_init(void);
+extern int config_init(void);
 extern s_config *config_get(void);
 
 #endif

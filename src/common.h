@@ -86,13 +86,13 @@ extern bool DEBUG_LOG;
 
 extern char * safe_strdup(const char *s);
 extern void *safe_malloc(size_t size);
-extern void get_eth_mac(char *eth, char *mac);
+extern int get_eth_mac(char *eth, char *mac);
 extern int safe_asprintf(char **strp, const char *fmt, ...);
 extern char *read_file(const char * filename);
 extern int wake_on_lan(char c, int ifdebug, char *wakeMac);
 extern int get_name_info(const char* ip, char *hostName);
 extern int get_if_addrs(void);
 extern void parse_commandline(int argc, char **argv);
-
+extern char *get_default_ifname(void);
 #endif
 

@@ -46,7 +46,7 @@ void *safe_malloc(size_t size)
     void *retval = NULL;
     retval = malloc(size);
     if (!retval) {
-        MSG_DEBUG("ERROR: Failed to malloc %d bytes of memory: %s.  Bailing out", size, strerror(errno));
+        MSG_DEBUG("ERROR: Failed to malloc %lu bytes of memory: %s.  Bailing out", size, strerror(errno));
         exit(1);
     }
     memset(retval, 0, size);
@@ -113,7 +113,34 @@ bool get_dev_macaddr(const char* devName, unsigned char *mac)
 	return true;
 }
 
-void get_eth_mac(char *eth, char *mac)
+char *get_default_ifname(void)
+{
+	FILE *fp;
+	char buffer[256], ifname[32], destination[32];
+	char *default_ifname = NULL;
+	fp = fopen("/proc/net/route", "r");
+	
+	if (fp) {
+		// skip first line
+		fgets(buffer, sizeof(buffer), fp);
+		while (fgets(buffer, sizeof(buffer), fp)) {
+			//fprintf(stdout,"route:  %s ", buffer);
+			if (sscanf(buffer, "%s  %s ", ifname, destination)) {
+				//fprintf(stdout, "ifname:%s, destination:%s\n",ifname,destination);
+				if(strcmp(destination, "00000000") == 0){
+					default_ifname  = safe_strdup(ifname);
+					break;
+				}
+			}
+		}
+	}
+	fclose(fp);	
+	if(default_ifname)
+		fprintf(stdout, "default_ifname:%s\n",default_ifname);
+	return default_ifname;
+}
+
+int get_eth_mac(char *eth, char *mac)
 {
 	unsigned char mac_arry[8]={0};
 	if(true == get_dev_macaddr(eth, mac_arry))
@@ -122,10 +149,11 @@ void get_eth_mac(char *eth, char *mac)
 	}
 	else
 	{
-		strcpy(mac,"01:02:03:04:05:06");
+		fprintf(stdout, "can't get eth mac %s\n", eth);
+		return -1 ;
 	}
 
-	return;
+	return 0;
 }
 
 char *read_file(const char * filename) {
@@ -230,6 +258,7 @@ static void usage(void)
     fprintf(stdout, "Usage: mwol [options]\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "options:\n");
+    fprintf(stdout, "  -i            ethernet device\n");
     fprintf(stdout, "  -d            Debug\n");
     fprintf(stdout, "  -f            Run in foreground\n");
     fprintf(stdout, "  -s            Log to syslog\n");
@@ -241,7 +270,7 @@ static void usage(void)
 void parse_commandline(int argc, char **argv) {
 	int c;
 	s_config *config = config_get();
-	while (-1 != (c = getopt(argc, argv, "c:hvfds"))) {
+	while (-1 != (c = getopt(argc, argv, "c:hvfdsi:"))) {
 
 		switch(c) {
 
@@ -249,23 +278,35 @@ void parse_commandline(int argc, char **argv) {
 				usage();
 				exit(1);
 				break;
+				
 			case 'c':
 				if (optarg) {
 					free(config->configfile);
 					config->configfile = safe_strdup(optarg);
-					MSG_DEBUG("Use new configfile %s\n",config->configfile);
+					fprintf(stdout,"Use new configfile %s\n",config->configfile);
 				}
 				break;
+				
+			case 'i':
+				if (optarg) {
+					free(config->ifname);
+					config->ifname = safe_strdup(optarg);
+					fprintf(stdout,"Use ethernet device %s\n",config->ifname);
+				}
+				break;
+				
 			case 'v':
-				fprintf(stdout, "version:%s\nbulid time:%s\n", BUILD_VERSION, BUILD_TIME);
+				fprintf(stdout,"version:%s\nbulid time:%s\n", BUILD_VERSION, BUILD_TIME);
 				exit(1);
 				break;
+				
 			case 'f':
 				break;
 			
 			case 'd':
 				DEBUG_LOG = true;
 				break;
+				
 			case 's':
 				break;
 
