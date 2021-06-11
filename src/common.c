@@ -118,6 +118,7 @@ char *get_default_ifname(void)
 	FILE *fp;
 	char buffer[256], ifname[32], destination[32];
 	char *default_ifname = NULL;
+	
 	fp = fopen("/proc/net/route", "r");
 	
 	if (fp) {

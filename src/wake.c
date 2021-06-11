@@ -94,21 +94,31 @@ extern int setsockopt __P ((int __fd, int __level, int __optname,
 #include <sys/socket.h>
 #endif
 
-u_char outpack[1000];
-int outpack_sz = 0;
-int debug = 0;
-u_char wol_passwd[6];
-int wol_passwd_sz = 0;
-
-int opt_no_src_addr = 0, opt_broadcast = 0;
+static int debug = 0;
+static u_char outpack[1000];
+static int outpack_sz = 0;
+static u_char wol_passwd[6];
+static int wol_passwd_sz = 0;
+static int opt_no_src_addr = 0;
+static int opt_broadcast = 0;
+static char *wol_ifname = NULL;
 
 static int get_dest_addr(const char *arg, struct ether_addr *eaddr);
 static int get_fill(unsigned char *pkt, struct ether_addr *eaddr);
 static int get_wol_pw(const char *optarg);
 
+void wol_set_ifname(char *ifname)
+{
+	if(!ifname)
+	{
+		wol_ifname = ifname;
+		wol_ifname = ifname;
+	}
+}
+
 int wake_on_lan(char c, bool ifdebug, char *wakeMac)
 {
-	char *ifname = "eth0";
+	char *ifname;
 	int one = 1;				/* True, for socket options. */
 	int s;						/* Raw socket */
 	int errflag = 0, verbose = 0, do_version = 0;
@@ -121,7 +131,16 @@ int wake_on_lan(char c, bool ifdebug, char *wakeMac)
 #endif
 	struct ether_addr eaddr;
 	opt_broadcast = 0;
-	switch (c) {
+	
+	
+	
+	if(wol_ifname == NULL){
+		fprintf(stderr, "wol_ifname == NULL \n");
+		return 3;
+	} else {
+		ifname = wol_ifname;
+	}
+	switch (c) {  
 	case 'b': opt_broadcast++;  break;
 	case 'D': debug++;			break;
 	case 'i': ifname = optarg;	break;
@@ -136,7 +155,7 @@ int wake_on_lan(char c, bool ifdebug, char *wakeMac)
 	if(ifdebug){
 		debug++;
 	}
-	
+
 	if (verbose || do_version)
 		printf("%s\n", version_msg);
 	if (errflag) {

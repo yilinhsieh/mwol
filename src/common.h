@@ -89,6 +89,7 @@ extern void *safe_malloc(size_t size);
 extern int get_eth_mac(char *eth, char *mac);
 extern int safe_asprintf(char **strp, const char *fmt, ...);
 extern char *read_file(const char * filename);
+extern void wol_set_ifname(char *ifname);
 extern int wake_on_lan(char c, int ifdebug, char *wakeMac);
 extern int get_name_info(const char* ip, char *hostName);
 extern int get_if_addrs(void);
