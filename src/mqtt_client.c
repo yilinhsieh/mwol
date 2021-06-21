@@ -124,11 +124,11 @@ void mqtt_arp_list(void)
 	}
 }
 
-void mqtt_wol_response(char *mac)
+void mqtt_wol_response(char *mac, bool success)
 {
 	char *json_msg = NULL;
 
-	json_wol_response(&json_msg, mac);
+	json_wol_response(&json_msg, mac, success);
 	if(json_msg!=NULL){
 		
 		MSG_DEBUG("%s\n",json_msg);

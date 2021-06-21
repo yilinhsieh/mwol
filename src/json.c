@@ -71,6 +71,7 @@ void process_wol_op(cJSON *root)
 	char *deviceId = NULL;
 	char *mac = NULL;
 	bool broadcast = false;
+	int wol_result = 0;
 
 	payload = cJSON_GetObjectItem(root, "payload");
 	deviceId = cJSON_GetObjectItem(payload, "deviceId")->valuestring;
@@ -80,11 +81,19 @@ void process_wol_op(cJSON *root)
 	if(mac != NULL){
 		MSG_DEBUG("wol mac:%s\n", mac);
 		if(broadcast){
-			wake_on_lan('b', true, mac);
-		}else{
-			wake_on_lan('D', true, mac);
+			wol_result = wake_on_lan('b', true, mac);
+		} else {
+			wol_result = wake_on_lan('D', true, mac);
 		}
-		mqtt_wol_response(mac);
+		
+		if(wol_result == 0)
+		{
+			MSG_DEBUG("send wol  to mac:%s success. \n", mac);
+			mqtt_wol_response(mac, true);
+		} else {
+			MSG_DEBUG("send wol  to mac:%s fail. \n", mac);
+			mqtt_wol_response(mac, false);
+		}
 	}
 
 }
@@ -301,7 +310,7 @@ void json_arp_list(char **msg)
 	}
 }
 */
-void json_wol_response(char **msg, char *mac)
+void json_wol_response(char **msg, char *mac, bool success)
 {
 	char *out;
 	cJSON *dir1;
@@ -314,8 +323,11 @@ void json_wol_response(char **msg, char *mac)
 
 	cJSON_AddItemToObject(root, "payload", dir2=cJSON_CreateObject());
 	cJSON_AddStringToObject(dir2, "mac", mac);
-	cJSON_AddStringToObject(dir2, "status", "success");
-
+	if(success){
+		cJSON_AddStringToObject(dir2, "status", "success");
+	} else {
+		cJSON_AddStringToObject(dir2, "status", "fail");
+	}
 	out = cJSON_PrintUnformatted(root);
 	*msg = (char *)safe_malloc(strlen(out)+1);
 

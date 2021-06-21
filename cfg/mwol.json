@@ -1,10 +1,12 @@
 {
-	"ssl": true,
-	"port": 1999,
-	"keyfile": "/usr/share/mwol/ssl/client.key",
-	"encryption": false,
-	"id": "testmwolid",
-	"cafile": "/usr/share/mwol/ssl/ca.crt",
-	"crtfile": "/usr/share/mwol/ssl/client.crt",
-	"hostname": "www.mleaf.org"
+        "ssl": true,
+        "port": 8884,
+        "keyfile": "/usr/share/mwol/ssl/client.key",
+        "encryption": true,
+        "id": "18:31:bf:52:1a:a5",
+        "cafile": "/usr/share/mwol/ssl/mosquitto.org.crt",
+        "crtfile": "/usr/share/mwol/ssl/client.crt",
+        "hostname": "test.mosquitto.org",
+	"wol_ifname": "eno1"
 }
+

@@ -25,11 +25,11 @@
 #define GETWAY_MQTT_TOPIC_SUB  "/mwol/%s"
 #define GETWAY_MQTT_TOPIC_PUB  "/mwol/%s"
 #define GETWAY_MQTT_CLIENT_ID  "mwol|%s"
-
+#include <stdbool.h>
 /*************************************************************************************************/
 extern void init_mqtt(void);
 extern void mqtt_arp_list(void);
-extern void mqtt_wol_response(char *mac);
+extern void mqtt_wol_response(char *mac, bool success);
 
 /*************************************************************************************************/
 
