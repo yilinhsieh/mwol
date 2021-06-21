@@ -109,9 +109,9 @@ static int get_wol_pw(const char *optarg);
 
 void wol_set_ifname(char *ifname)
 {
-	if(!ifname)
+	fprintf(stderr, "wol_set_ifname : %s \n", ifname);
+	if(ifname)
 	{
-		wol_ifname = ifname;
 		wol_ifname = ifname;
 	}
 }
