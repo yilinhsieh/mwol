@@ -29,7 +29,8 @@ static struct wol_json_op {
 } wol_op[] = {
 
 	{"arp", process_arp_list_op},
-	{"wol", process_wol_op},
+	{"wake", process_wake_op},
+	//{"wol", process_wol_op},
 
 	{NULL, NULL}
 
@@ -52,6 +53,51 @@ void process_arp_list_op(cJSON *root)
 }
 
 /*
+{ 
+    "action": "wake",
+    "targets": [ 
+                    {"mac": "00:03:7f:11:23:1f"},
+                    {"mac": "12:34:56:11:23:45"}
+               ]
+    "seq":  32767
+}
+*/
+
+void process_wake_op(cJSON *root)
+{
+	cJSON *targets = NULL;
+	char *mac = NULL;
+	int seq = 0;
+	int wol_result = 0;
+	int target_num = 0;
+
+	seq = cJSON_GetObjectItem(root, "seq")->valueint;
+	targets = cJSON_GetObjectItem(root, "targets");
+	target_num = cJSON_GetArraySize(targets);
+	MSG_DEBUG("seq:%d, target num = %d\n", seq, target_num);
+	
+	for(int i = 0; i < target_num; i ++) 
+	{
+		cJSON *target = NULL;
+		target = cJSON_GetArrayItem(targets, i);
+		mac = cJSON_GetObjectItem(target, "mac")->valuestring;
+		if(mac != NULL){
+			MSG_DEBUG("wol mac:%s\n", mac);
+			wol_result += wake_on_lan('b', true, mac);
+		}
+	}
+	if(wol_result == 0)
+	{
+		MSG_DEBUG("send wake %d  Success. \n", seq);
+		mqtt_wake_response(seq, true);
+	} else {
+		MSG_DEBUG("send wol  %d fail. \n", seq);
+		mqtt_wake_response(seq, false);
+	}
+}
+
+
+/*
 {
 	"header": {
 		"action": "wol"
@@ -70,7 +116,7 @@ void process_wol_op(cJSON *root)
 	
 	char *deviceId = NULL;
 	char *mac = NULL;
-	bool broadcast = false;
+	bool broadcast = true; // set default true
 	int wol_result = 0;
 
 	payload = cJSON_GetObjectItem(root, "payload");
@@ -95,7 +141,6 @@ void process_wol_op(cJSON *root)
 			mqtt_wol_response(mac, false);
 		}
 	}
-
 }
 
 /**********************************************************************/
@@ -116,33 +161,20 @@ json_parse_token(char *action, cJSON *root)
 
 static int validate_json_Object(cJSON *item)
 {
-	cJSON *found_header = NULL;
-	cJSON *found_payload = NULL;
+	cJSON *found_action = NULL;
 
-	found_header = cJSON_GetObjectItem(item,"header");
-	if(NULL == found_header)
+	found_action = cJSON_GetObjectItem(item,"action");
+	if(NULL == found_action)
 	{
 		return JSON_ERROR;
 	}
 
-	found_payload = cJSON_GetObjectItem(item,"payload");
-	if(NULL == found_payload)
-	{
-		return JSON_ERROR;
-	}
-
-	if( found_header->type == cJSON_Object && found_payload->type == cJSON_Object)  
-	{	 
-		return JSON_SUCCESS;
-	}
-	else{
-		return JSON_ERROR;
-	}
+	return JSON_SUCCESS;
 
 }
 
 /*
-{
+{   no use
     "header": {
         "action": "xxx"
     },
@@ -151,12 +183,23 @@ static int validate_json_Object(cJSON *item)
         "status": "success",
         "data": [{}]
 }
+*/
 
+
+/*
+{ 
+    "action": "wake",
+    "targets": [ 
+                    {"mac": "00:03:7f:11:23:1f"},
+                    {"mac": "12:34:56:11:23:45"}
+               ]
+    "seq":  32767
+}
 */
 int process_json_object(char *msg)
 {
 	cJSON *item = NULL;
-	cJSON *header;
+	
 	int ret = JSON_ERROR;
 	char *action;
 
@@ -173,18 +216,14 @@ int process_json_object(char *msg)
 	ret = validate_json_Object(item);
 	if(JSON_SUCCESS != ret)
 	{
-		MSG_DEBUG("Error Json Object.\n");
+		MSG_DEBUG("not command Json Object.\n");
 		return JSON_ERROR;
 	}
 	else{
 
-		header = cJSON_GetObjectItem(item, "header");
-		action = cJSON_GetObjectItem(header, "action")->valuestring;
-
+		action = cJSON_GetObjectItem(item, "action")->valuestring;
 		json_parse_token(action, item);
-
 	}
-
 	cJSON_Delete(item);
 	return JSON_SUCCESS;
 }
@@ -310,6 +349,7 @@ void json_arp_list(char **msg)
 	}
 }
 */
+
 void json_wol_response(char **msg, char *mac, bool success)
 {
 	char *out;
@@ -327,6 +367,39 @@ void json_wol_response(char **msg, char *mac, bool success)
 		cJSON_AddStringToObject(dir2, "status", "success");
 	} else {
 		cJSON_AddStringToObject(dir2, "status", "fail");
+	}
+	out = cJSON_PrintUnformatted(root);
+	*msg = (char *)safe_malloc(strlen(out)+1);
+
+	strncpy(*msg, out, strlen(out));
+
+	cJSON_Delete(root);
+	if(out)
+	{
+		free(out);
+	}
+}
+
+
+/*
+* {
+    "response":"wake",
+    "seq":  32767            
+    "status":"success"
+}
+*/
+void json_wake_response(char **msg, int seq, bool success)
+{
+	char *out;
+	
+	cJSON *root = cJSON_CreateObject();
+	
+	cJSON_AddStringToObject(root, "response", "wake");
+	cJSON_AddNumberToObject(root, "seq", seq);
+	if(success){
+		cJSON_AddStringToObject(root, "status", "success");
+	} else {
+		cJSON_AddStringToObject(root, "status", "fail");
 	}
 	out = cJSON_PrintUnformatted(root);
 	*msg = (char *)safe_malloc(strlen(out)+1);

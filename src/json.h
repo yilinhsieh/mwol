@@ -34,8 +34,9 @@
 
 extern void process_arp_list_op(cJSON *root);
 extern void process_wol_op(cJSON *root);
+extern void process_wake_op(cJSON *root);
 extern void json_arp_list(char **msg);
-extern void json_wol_response(char **msg, char *mac, bool success);
+extern void json_wake_response(char **msg, int sn, bool success);
 extern int process_json_object(char *msg);
 
 #endif
