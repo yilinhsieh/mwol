@@ -20,42 +20,32 @@
 
 /***********************************************************
 @protocol
-网关发布主题：
 
-网关上行数据发布接口：/etherWakeData/网关mac
+Server publish topic: MAC/S
+Client publish topic: MAC/C 
 
-网关订阅主题：
+EX: if client eth1 mac:  C6:FB:4C:F5:26:23
+Server publish topic: C6:FB:4C:F5:26:23/S
+Client publish topic: C6:FB:4C:F5:26:23/C 
 
-平台下行数据发布接口：/etherWakeCtrl/网关mac
+mqtt command 
 
-网关连接broker：
-
-etherWake|网关mac
-
-网关数据格式：
-
-{
-    "header": {
-        "action": "xxx"
-    },
-    "payload": {
-        "deviceId": "72:42:2D:88:16:BF",
-        "status": "success",
-        "data": [{}]
-    }
+Command struct {
+Action string `json:"action"`
+Targets []string `json:"targets,omitempty"`
+Seq int `json:"seq"`
+Note string `json:"note,omitempty"`
 }
 
-平台数据格式：
+Targets struct{
+Mac  string `json:"mac"`
+Ip  string `json:"ip",omitempty`
+}
 
-{
-    "header": {
-        "action": "xxx"
-    },
-    "payload": {
-        "deviceId": "72:42:2D:88:16:BF",
-        "status": "success",
-        "data": [{}]
-    }
+Response struct {
+Response string `json:"response"`
+Seq int `json:"seq"`
+Note string `json:"note,omitempty"`
 }
 
 ***********************************************************/
@@ -109,11 +99,12 @@ send_mqtt_response(struct mosquitto *mosq, const char *msg)
 }
 
 
-void mqtt_arp_list(void)
+void mqtt_arp_list_response(int sn)
 {
 	char *json_msg = NULL;
 
-	json_arp_list(&json_msg);
+	json_arp_list(&json_msg , sn);
+	
 	if(json_msg!=NULL){
 		
 		MSG_DEBUG("%s\n",json_msg);
@@ -141,26 +132,12 @@ void mqtt_wake_response(int sn, bool success)
 } 
 
 
-void mqtt_wol_response(char *mac, bool success)
-{
-	char *json_msg = NULL;
-
-	json_wol_response(&json_msg, mac, success);
-	if(json_msg!=NULL){
-		
-		MSG_DEBUG("%s\n",json_msg);
-
-		send_mqtt_response(mosq, json_msg);
-
-		free(json_msg);
-	}
-}
-
 static void
 process_mqtt_reqeust(struct mosquitto *mosq, void *data, s_config *config)
 {
 	process_json_object((char *)data);
 }
+
 
 static void 
 mqtt_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
@@ -172,6 +149,7 @@ mqtt_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_
 		process_mqtt_reqeust(mosq, message->payload, config);
 	}
 }
+
 
 static void
 mqtt_connect_callback(struct mosquitto *mosq, void *obj, int result)
@@ -191,6 +169,7 @@ mqtt_connect_callback(struct mosquitto *mosq, void *obj, int result)
 
 	free(default_topic);
 }
+
 
 void init_mqtt(void)
 {

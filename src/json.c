@@ -30,7 +30,7 @@ static struct wol_json_op {
 
 	{"arp", process_arp_list_op},
 	{"wake", process_wake_op},
-	//{"wol", process_wol_op},
+
 
 	{NULL, NULL}
 
@@ -48,7 +48,10 @@ static struct wol_json_op {
 */
 void process_arp_list_op(cJSON *root)
 {
-	mqtt_arp_list();
+	int seq = 0;
+	seq = cJSON_GetObjectItem(root, "seq")->valueint;
+
+	mqtt_arp_list_response(seq);
 
 }
 
@@ -97,52 +100,6 @@ void process_wake_op(cJSON *root)
 }
 
 
-/*
-{
-	"header": {
-		"action": "wol"
-	},
-	"payload": {
-		"deviceId": "06:f0:21:34:5f:1d",
-		"mac": "00:25:22:42:b6:93",
-		"broadcast": true
-	}
-}
-*/
-
-void process_wol_op(cJSON *root)
-{
-	cJSON *payload = NULL;
-	
-	char *deviceId = NULL;
-	char *mac = NULL;
-	bool broadcast = true; // set default true
-	int wol_result = 0;
-
-	payload = cJSON_GetObjectItem(root, "payload");
-	deviceId = cJSON_GetObjectItem(payload, "deviceId")->valuestring;
-	mac = cJSON_GetObjectItem(payload, "mac")->valuestring;
-	broadcast = (bool)cJSON_GetObjectItem(payload, "broadcast")->valueint;
-	MSG_DEBUG("deviceId:%s\n", deviceId);
-	if(mac != NULL){
-		MSG_DEBUG("wol mac:%s\n", mac);
-		if(broadcast){
-			wol_result = wake_on_lan('b', true, mac);
-		} else {
-			wol_result = wake_on_lan('D', true, mac);
-		}
-		
-		if(wol_result == 0)
-		{
-			MSG_DEBUG("send wol  to mac:%s success. \n", mac);
-			mqtt_wol_response(mac, true);
-		} else {
-			MSG_DEBUG("send wol  to mac:%s fail. \n", mac);
-			mqtt_wol_response(mac, false);
-		}
-	}
-}
-
 /**********************************************************************/
 
 static void
@@ -172,19 +129,6 @@ static int validate_json_Object(cJSON *item)
 	return JSON_SUCCESS;
 
 }
-
-/*
-{   no use
-    "header": {
-        "action": "xxx"
-    },
-    "payload": {
-        "deviceId": "72:42:2D:88:16:BF",
-        "status": "success",
-        "data": [{}]
-}
-*/
-
 
 /*
 { 
@@ -217,6 +161,7 @@ int process_json_object(char *msg)
 	if(JSON_SUCCESS != ret)
 	{
 		MSG_DEBUG("not command Json Object.\n");
+		cJSON_Delete(item);
 		return JSON_ERROR;
 	}
 	else{
@@ -235,7 +180,7 @@ int process_json_object(char *msg)
 	},
 	"payload": {
 		"deviceId": "06:f0:21:34:5f:1d",
-		"data": [{
+		"note": [{
 				"mac": "00:03:7f:11:23:1f",
 				"ip": "10.13.35.31",
 				"hostName": "* *"
@@ -253,9 +198,8 @@ int process_json_object(char *msg)
 		]
 	}
 }
-
 */
-void json_arp_list(char **msg)
+void json_arp_list(char **msg, int sn)
 {
 	FILE *fp;
 	unsigned int arp_flags;
@@ -265,7 +209,7 @@ void json_arp_list(char **msg)
 	int ret = -1;
 
 	char *out=NULL;
-	cJSON *dir1=NULL;
+	
 	cJSON *dir2=NULL;
 	cJSON *dataArry=NULL;
 	cJSON *dir3=NULL;
@@ -279,11 +223,11 @@ void json_arp_list(char **msg)
 	cJSON *root = cJSON_CreateObject();
 	dataArry = cJSON_CreateArray();
 	
-	cJSON_AddItemToObject(root, "header", dir1=cJSON_CreateObject());
+	
 
-	cJSON_AddStringToObject(dir1, "action", "response_arp");
-
-	cJSON_AddItemToObject(root, "payload", dir2=cJSON_CreateObject());
+	cJSON_AddStringToObject(root, "action", "response_arp");
+	cJSON_AddNumberToObject(root, "seq", sn);
+	cJSON_AddItemToObject(root, "note", dir2=cJSON_CreateObject());
 	cJSON_AddStringToObject(dir2, "deviceId", board_config->gw_id);
 
 	dir3=cJSON_CreateObject();
@@ -293,7 +237,6 @@ void json_arp_list(char **msg)
 	cJSON_AddItemToArray(dataArry, dir3);
 	
 	fp = fopen("/proc/net/arp", "r");
-	
 	if (fp) {
 		// skip first line
 		fgets(buffer, sizeof(buffer), fp);
@@ -319,9 +262,9 @@ void json_arp_list(char **msg)
 				}
 			}
 		}
-		
 		fclose(fp);
 	}
+	
 	cJSON_AddItemToObject(dir2, "data", dataArry);
 
 	out = cJSON_PrintUnformatted(root);
@@ -331,48 +274,6 @@ void json_arp_list(char **msg)
 	strncpy(*msg, out, strlen(out));
 
 	//MSG_DEBUG("%s\n",out);
-	cJSON_Delete(root);
-	if(out)
-	{
-		free(out);
-	}
-}
-
-/*
-{
-	"header": {
-		"action": "response_wol"
-	},
-	"payload": {
-		"mac": "00:03:7f:11:23:1f",
-		"status": "success"
-	}
-}
-*/
-
-void json_wol_response(char **msg, char *mac, bool success)
-{
-	char *out;
-	cJSON *dir1;
-	cJSON *dir2;
-
-	cJSON *root = cJSON_CreateObject();
-	cJSON_AddItemToObject(root, "header", dir1=cJSON_CreateObject());
-
-	cJSON_AddStringToObject(dir1, "action", "response_wol");
-
-	cJSON_AddItemToObject(root, "payload", dir2=cJSON_CreateObject());
-	cJSON_AddStringToObject(dir2, "mac", mac);
-	if(success){
-		cJSON_AddStringToObject(dir2, "status", "success");
-	} else {
-		cJSON_AddStringToObject(dir2, "status", "fail");
-	}
-	out = cJSON_PrintUnformatted(root);
-	*msg = (char *)safe_malloc(strlen(out)+1);
-
-	strncpy(*msg, out, strlen(out));
-
 	cJSON_Delete(root);
 	if(out)
 	{

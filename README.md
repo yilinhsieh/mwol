@@ -1,4 +1,11 @@
 
+Server publish topic: /${MAC}/S
+Client publish topic: /${MAC}/C 
+
+EX: if client eth1 mac:  C6:FB:4C:F5:26:23
+Server publish topic: /C6:FB:4C:F5:26:23/S
+Client publish topic: /C6:FB:4C:F5:26:23/C 
+
 Command struct {
 Action string `json:"action"`
 Targets []string `json:"targets,omitempty"`
