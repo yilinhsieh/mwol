@@ -32,10 +32,15 @@
 #define JSON_SUCCESS 1
 #endif
 
+#define ERROR_ACTION_NAME_NOTVAILD 1
+#define ERROR_ACTION_FORMAT_NOTVAILD 2
+
 extern void process_arp_list_op(cJSON *root);
 extern void process_wake_op(cJSON *root);
 extern void json_arp_list(char **msg, int sn);
 extern void json_wake_response(char **msg, int sn, bool success);
+extern void json_Error_response(char **msg, int seq, int error_num);
 extern int process_json_object(char *msg);
+
 
 #endif

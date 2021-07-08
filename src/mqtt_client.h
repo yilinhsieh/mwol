@@ -29,8 +29,10 @@
 /*************************************************************************************************/
 extern void init_mqtt(void);
 extern void mqtt_arp_list(void);
-extern void mqtt_wol_response(char *mac, bool success);
 extern void mqtt_wake_response(int sn, bool success);
+extern void mqtt_arp_list_response(int);
+extern void  mqtt_error_response(int, int);
+
 /*************************************************************************************************/
 
 #endif

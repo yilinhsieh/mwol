@@ -106,15 +106,25 @@ static void
 json_parse_token(char *action, cJSON *root)
 {
 	int i = 0;
-
+	bool match = false;
 	for (; wol_op[i].action != NULL; i++) {
 		if(strcmp(action, wol_op[i].action) == 0 && wol_op[i].process_wol_json_op){
 			
 			wol_op[i].process_wol_json_op(root);
+			match = true;
 			break;
 		}
 	}
+	
+	if(match != true) // no match
+	{
+		int seq = 0;
+		seq = cJSON_GetObjectItem(root, "seq")->valueint;
+		mqtt_error_response(seq, ERROR_ACTION_NAME_NOTVAILD);
+	}
 }
+
+
 
 static int validate_json_Object(cJSON *item)
 {
@@ -313,4 +323,36 @@ void json_wake_response(char **msg, int seq, bool success)
 		free(out);
 	}
 }
+
+
+
+/*
+* {
+    "response":"error",
+    "seq":  sn            
+    "error_num": errornum
+}
+*/
+
+void json_Error_response(char **msg, int seq, int  error_num)
+{
+	char *out;
+	
+	cJSON *root = cJSON_CreateObject();
+	
+	cJSON_AddStringToObject(root, "response", "error");
+	cJSON_AddNumberToObject(root, "seq", seq);
+	cJSON_AddNumberToObject(root, "error_num", seq);
+	out = cJSON_PrintUnformatted(root);
+	*msg = (char *)safe_malloc(strlen(out)+1);
+
+	strncpy(*msg, out, strlen(out));
+
+	cJSON_Delete(root);
+	if(out)
+	{
+		free(out);
+	}
+}
+
 

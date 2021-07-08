@@ -121,12 +121,26 @@ void mqtt_wake_response(int sn, bool success)
 	char *json_msg = NULL;
 
 	json_wake_response(&json_msg, sn, success);
+	
 	if(json_msg!=NULL){
-		
 		MSG_DEBUG("%s\n",json_msg);
-
 		send_mqtt_response(mosq, json_msg);
+		free(json_msg);
+	}
+} 
 
+
+
+
+void mqtt_error_response(int sn, int error_num)
+{
+	char *json_msg = NULL;
+
+	json_Error_response(&json_msg, sn, error_num);
+	
+	if(json_msg!=NULL){
+		MSG_DEBUG("%s\n",json_msg);
+		send_mqtt_response(mosq, json_msg);
 		free(json_msg);
 	}
 } 
