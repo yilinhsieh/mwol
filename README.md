@@ -50,11 +50,16 @@ Ip  string `json:"ip",omitempty`
 
 
 test with mosquitto client:
- mosquitto_sub -p 8884 -h test.mosquitto.org  --cafile /usr/share/mwol/ssl/mosquitto.org.crt  --key /usr/share/mwol/ssl/client.key  --cert /usr/share/mwol/ssl/client.crt -t "/mwol/18:31:bf:52:1a:a5" 
-
- mosquitto_pub -p 8884 -h test.mosquitto.org  --cafile /usr/share/mwol/ssl/mosquitto.org.crt  --key /usr/share/mwol/ssl/client.key  --cert /usr/share/mwol/ssl/client.crt -t "/mwol/18:31:bf:52:1a:a5" -m "{\"action\": \"wake\",\"targets\": [ {\"mac\": \"00:03:7f:11:23:1f\"}, {\"mac\": \"12:34:56:11:23:45\"}], \"seq\":  32767}"
 
 
+ mosquitto_sub -p 8884 -h test.mosquitto.org  --cafile /usr/share/mwol/ssl/mosquitto.org.crt  --key /usr/share/mwol/ssl/client.key  --cert /usr/share/mwol/ssl/client.crt -t "/18:31:bf:52:1a:a5/S" 
+
+ mosquitto_sub -p 8884 -h test.mosquitto.org  --cafile /usr/share/mwol/ssl/mosquitto.org.crt  --key /usr/share/mwol/ssl/client.key  --cert /usr/share/mwol/ssl/client.crt -t "/18:31:bf:52:1a:a5/C" 
+
+ mosquitto_pub -p 8884 -h test.mosquitto.org  --cafile /usr/share/mwol/ssl/mosquitto.org.crt  --key /usr/share/mwol/ssl/client.key  --cert /usr/share/mwol/ssl/client.crt -t "/18:31:bf:52:1a:a5/S" -m "{\"action\": \"wake\",\"targets\": [ {\"mac\": \"00:03:7f:11:23:1f\"}, {\"mac\": \"12:34:56:11:23:45\"}], \"seq\":  32767}"
+
+
+ mosquitto_pub -p 8884 -h test.mosquitto.org  --cafile /usr/share/mwol/ssl/mosquitto.org.crt  --key /usr/share/mwol/ssl/client.key  --cert /usr/share/mwol/ssl/client.crt -t "/18:31:bf:52:1a:a5/S" -m "{\"action\": \"arp\", \"seq\":  32767}"
 
 
 ~
