@@ -223,7 +223,6 @@ int config_init(void)
 			CONFIG.ifname = safe_strdup(DEFAULT_IFNAME);
 		}
 	}
-	wol_set_ifname(CONFIG.ifname);
 	
 	if(get_eth_mac(CONFIG.ifname, ap_mac) < 0 )
 	{

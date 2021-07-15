@@ -86,7 +86,7 @@ void process_wake_op(cJSON *root)
 		mac = cJSON_GetObjectItem(target, "mac")->valuestring;
 		if(mac != NULL){
 			MSG_DEBUG("wol mac:%s\n", mac);
-			wol_result += wake_on_lan('b', true, mac);
+			wol_result += wake_on_lan(mac);
 		}
 	}
 	if(wol_result == 0)
