@@ -55,6 +55,7 @@ void createMagicPacket(unsigned char packet[], unsigned int macAddress[]){
 	}
 }
 
+
 int wake_on_lan(char *wakeMac) {
 
 	// Default broadcast address
@@ -65,7 +66,7 @@ int wake_on_lan(char *wakeMac) {
 	unsigned int mac[6];
 	// Set broadcast
 	int broadcast = 1;
-
+	int resend = 2;
 	// Socket address
 	struct sockaddr_in udpClient, udpServer;
 	
@@ -74,7 +75,7 @@ int wake_on_lan(char *wakeMac) {
 	i = sscanf(wakeMac,"%x:%x:%x:%x:%x:%x", &(mac[0]), &(mac[1]), &(mac[2]), &(mac[3]), &(mac[4]), &(mac[5]));
 	if(i != 6){
 		fprintf(stderr,"Invalid mac address was given.\n");
-		exit(EXIT_FAILURE);
+		return 1;
 	}
 
 	// Print address
@@ -99,12 +100,12 @@ int wake_on_lan(char *wakeMac) {
 	int udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
 	if (udpSocket == -1) {
 		fprintf(stderr,"An error was encountered creating the UDP socket: '%s'.\n", strerror(errno));
-		exit(EXIT_FAILURE);
+		return 2;
 	}
 	int setsock_result = setsockopt(udpSocket, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
 	if (setsock_result == -1) {
 		fprintf(stderr,"Failed to set socket options: '%s'.\n", strerror(errno));
-		exit(EXIT_FAILURE);
+		return 1;
 	}
 	// Set parameters
 	udpClient.sin_family = AF_INET;
@@ -114,19 +115,22 @@ int wake_on_lan(char *wakeMac) {
 	int bind_result = bind(udpSocket, (struct sockaddr*) &udpClient, sizeof(udpClient));
 	if (bind_result == -1) {
 		fprintf(stderr,"Failed to bind socket: '%s'.\n", strerror(errno));
-		exit(EXIT_FAILURE);
+		return 3;
 	}
 
 	// Set server end point (the broadcast addres)
 	udpServer.sin_family = AF_INET;
 	udpServer.sin_addr.s_addr = inet_addr(broadcastAddress);
 	udpServer.sin_port = htons(9);
-
-	// Send the packet
-	int result = sendto(udpSocket, &packet, sizeof(unsigned char) * 102, 0, (struct sockaddr*) &udpServer, sizeof(udpServer));
-	if (result == -1) {
-		fprintf(stderr,"Failed to send magic packet to socket: '%s'.\n", strerror(errno));
-		exit(EXIT_FAILURE);
+	
+	for(int n = 0; n < resend; n++)
+	{
+		// Send the packet
+		int result = sendto(udpSocket, &packet, sizeof(unsigned char) * 102, 0, (struct sockaddr*) &udpServer, sizeof(udpServer));
+		if (result == -1) {
+			fprintf(stderr,"Failed to send magic packet to socket: '%s'.\n", strerror(errno));
+			return 4;
+		}
 	}
 
 	// Done
